@@ -94,7 +94,8 @@ void DisplayFunc(void)
 	//	setParameters(program);
 
 	// Load image from tga file
-	TGA *TGAImage	= new TGA("./sphericalenvironmentmap/house2.tga");
+	TGA *TGAImage	= new TGA("./planartexturemap/abstract2.tga");
+	//TGA *TGAImage	= new TGA("./sphericalenvironmentmap/house2.tga");
 	//TGA *TGAImage	= new TGA("./cubicenvironmentmap/cm_right.tga");
 
 	// Use to dimensions of the image as the texture dimensions

@@ -65,9 +65,4 @@
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Object Include="teapot.obj">
-      <Filter>Source Files</Filter>
-    </Object>
-  </ItemGroup>
 </Project>
