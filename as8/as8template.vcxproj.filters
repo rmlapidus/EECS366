@@ -64,5 +64,8 @@
     <None Include="textMapShadder.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="bumpMapShadder.vert">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

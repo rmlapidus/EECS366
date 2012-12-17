@@ -38,8 +38,8 @@ faceStruct *faceList;	    // Face List
 char *shaderFileRead(char *fn);
 GLuint vertex_shader,fragment_shader,p;
 int program=-1;
-int algorithm = 2;
-int object = 2;
+int algorithm = 0;
+int object = 0;
 int texture = 0;
 int mapping = 0;
 
@@ -65,9 +65,48 @@ int MouseY = 0;
 bool MouseLeft = false;
 bool MouseRight = false;
 
+GLUquadric *quad;
 
-
-
+void drawTriangle(point v1, point v2, point v3)
+{
+	float x1, y1;
+	glBegin(GL_TRIANGLES);
+				point n1, n2, n3;
+				n1 = v1;
+				n2 = v2;
+				n3 = v3;
+				glNormal3f(n1.x, n1.y, n1.z);
+				if(texture == 0)
+					glTexCoord2f (v1.x, v1.y);
+				else
+				{
+					x1 = atan2(n1.x,n1.z)/(2 * PI) + .5;
+					y1 = asin(n1.y)/PI + .5;
+					glTexCoord2f (x1, y1);
+				}
+				glVertex3f(v1.x, v1.y, v1.z);
+				glNormal3f(n2.x, n2.y, n2.z);
+				if(texture == 0)
+					glTexCoord2f (v2.x, v2.y);
+				else
+				{
+					float x = atan2(n2.x,n2.z)/(2 * PI) + .5;
+					float y =  asin(n2.y)/PI + .5;
+					glTexCoord2f (x,y);
+				}
+				glVertex3f(v2.x, v2.y, v2.z);
+				glNormal3f(n3.x, n3.y, n3.z);
+				if(texture == 0)
+					glTexCoord2f (v3.x, v3.y);
+				else
+				{
+					float x = atan2(n3.x,n3.z)/(2 * PI) + .5;
+					float y =  asin(n3.y)/PI + .5;
+					glTexCoord2f (x,y);
+				}
+				glVertex3f(v3.x, v3.y, v3.z);
+			glEnd();
+}
 
 void DisplayFunc(void) 
 {
@@ -91,16 +130,19 @@ void DisplayFunc(void)
 	glEnable(GL_DEPTH_TEST);	
 	glEnable(GL_TEXTURE_2D);
 
-	//	setParameters(program);
+		setParameters(program);
 	
 	// Load image from tga file
 	char* tgaFile = "";
-	if(texture == 0)
+	if(texture == 0 && mapping == 0)
 		tgaFile = "./planartexturemap/abstract2.tga";
-	else if(texture == 1)
+	else if(texture == 1 && mapping == 0)
+		tgaFile = "./sphericaltexturemap/earth2.tga";
+	else if(mapping == 1)
 		tgaFile = "./sphericalenvironmentmap/house2.tga";
 	else
-		tgaFile = "./cubicenvironmentmap/cm_right.tga";
+		tgaFile = "./planartexturemap/abstract2.tga";
+		//tgaFile = "./planarbumpmap/abstract_gray2.tga";
 
 	TGA *TGAImage = new TGA(tgaFile);
 
@@ -138,38 +180,45 @@ void DisplayFunc(void)
 	glBindTexture (GL_TEXTURE_2D, id); 
 
     delete TGAImage;
-
-	for (int i = 0; i < faces; i++)
+	if (object == 0)
 	{
-		
-		glBegin(GL_TRIANGLES);
-			point v1, v2, v3, n1, n2, n3;
-			v1 = vertList[faceList[i].v1];
-			v2 = vertList[faceList[i].v2];
-			v3 = vertList[faceList[i].v3];
-			n1 = vertList[faceList[i].v1];
-			n2 = vertList[faceList[i].v2];
-			n3 = vertList[faceList[i].v3];
-			glNormal3f(n1.x, n1.y, n1.z);
-			if(texture == 0)
-				glTexCoord2f (v1.x, v1.z);
-			else
-				glTexCoord2f (acos(v1.z/sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z)), atan(v1.y/v1.x));
-			glVertex3f(v1.x, v1.y, v1.z);
-			glNormal3f(n2.x, n2.y, n2.z);
-			glTexCoord2f (v2.x, v2.y);
-			glVertex3f(v2.x, v2.y, v2.z);
-			glNormal3f(n3.x, n3.y, n3.z);
-			glTexCoord2f (v3.x, v3.y);
-			glVertex3f(v3.x, v3.y, v3.z);
-		glEnd();
+		float w = .1;
+		for (float i = -20; i < 20; i += w)
+			for (float j = -20; j < 20; j += w)
+			{
+				point v1, v2, v3, v4;
+				v1.x = i;
+				v1.y = j;
+				v1.z = 0;
+				v2.x = i+w;
+				v2.y = j;
+				v2.z = 0;
+				v3.x = i;
+				v3.y = j+w;
+				v3.z = 0;
+				v4.x = i+w;
+				v4.y = j+w;
+				v4.z = 0;
+				drawTriangle(v1, v2, v3);
+				drawTriangle(v2, v3, v4);
+			}	
+	}
+	else if(object == 1)
+	{
+		gluQuadricTexture(quad,1);
+		gluSphere(quad,2,20,20);
+	}
+	else if (object == 2)
+		for (int i = 0; i < faces; i++)
+			drawTriangle(vertList[faceList[i].v1], vertList[faceList[i].v2], vertList[faceList[i].v3]);
 
-	}	
+
 
 	//glutSolidTeapot(1);
-//	setParameters(program);
+	//setParameters(program);
 	glutSwapBuffers();
 }
+
 
 void ReshapeFunc(int x,int y)
 {
@@ -259,9 +308,9 @@ void KeyboardFunc(unsigned char key, int x, int y)
 
 int main(int argc, char **argv) 
 {			  
-		
-	//meshReader("teapot.obj", 1);
-	meshReader("plane.obj", 1);
+	quad = gluNewQuadric();
+	meshReader("teapot.obj", 1);
+	//meshReader("plane.obj", 1);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
@@ -459,10 +508,10 @@ void setParameters(GLuint program)
 	//Access attributes in vertex shader
 	tangent_loc = glGetAttribLocationARB(program,"tang");
 	glVertexAttrib1fARB(tangent_loc,tangent);
-
-	//GLint units;
-	//glGetIntegerv (GL_MAX_TEXTURE_UNITS, &units);
-	//glActiveTexture (GL_TEXTURE0);*/
+	
+	GLint units;
+	glGetIntegerv (GL_MAX_TEXTURE_UNITS, &units);
+	glActiveTexture (GL_TEXTURE0);*/
 
 }
 
