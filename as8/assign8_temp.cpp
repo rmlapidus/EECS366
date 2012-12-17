@@ -37,11 +37,11 @@ faceStruct *faceList;	    // Face List
 //Illimunation and shading related declerations
 char *shaderFileRead(char *fn);
 GLuint vertex_shader,fragment_shader,p;
-int illimunationMode = 0;
-int shadingMode = 0;
-int lightSource = 0;
 int program=-1;
-
+int algorithm = 2;
+int object = 2;
+int texture = 0;
+int mapping = 0;
 
 //Parameters for Copper (From: "Computer Graphics Using OpenGL" BY F.S. Hill, Jr.) 
 GLfloat ambient_cont [] = {0.19125,0.0735,0.0225};
@@ -92,11 +92,17 @@ void DisplayFunc(void)
 	glEnable(GL_TEXTURE_2D);
 
 	//	setParameters(program);
-
+	
 	// Load image from tga file
-	TGA *TGAImage	= new TGA("./planartexturemap/abstract2.tga");
-	//TGA *TGAImage	= new TGA("./sphericalenvironmentmap/house2.tga");
-	//TGA *TGAImage	= new TGA("./cubicenvironmentmap/cm_right.tga");
+	char* tgaFile = "";
+	if(texture == 0)
+		tgaFile = "./planartexturemap/abstract2.tga";
+	else if(texture == 1)
+		tgaFile = "./sphericalenvironmentmap/house2.tga";
+	else
+		tgaFile = "./cubicenvironmentmap/cm_right.tga";
+
+	TGA *TGAImage = new TGA(tgaFile);
 
 	// Use to dimensions of the image as the texture dimensions
 	uint width	= TGAImage->GetWidth();
@@ -145,7 +151,10 @@ void DisplayFunc(void)
 			n2 = vertList[faceList[i].v2];
 			n3 = vertList[faceList[i].v3];
 			glNormal3f(n1.x, n1.y, n1.z);
-			glTexCoord2f (v1.x, v1.y);
+			if(texture == 0)
+				glTexCoord2f (v1.x, v1.z);
+			else
+				glTexCoord2f (acos(v1.z/sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z)), atan(v1.y/v1.x));
 			glVertex3f(v1.x, v1.y, v1.z);
 			glNormal3f(n2.x, n2.y, n2.z);
 			glTexCoord2f (v2.x, v2.y);
@@ -216,63 +225,43 @@ void KeyboardFunc(unsigned char key, int x, int y)
 	{
 	case 'A':
 	case 'a':
-		ShowAxes = !ShowAxes;
+		if(algorithm >= 7)
+			algorithm = 0;
+		else
+			algorithm ++;
 		break;
 	case 'Q':
 	case 'q':
 		exit(1);
 		break;
-	case 'w':
-	case 'W':
-		if (illimunationMode == 0)
-		{
-			illimunationMode = 1;
-		}
-		else
-		{
-			illimunationMode = 0;
-		}
-		break;
-	case 'e':
-	case 'E':
-		if (shadingMode == 0)
-		{
-			shadingMode =1;
-		}
-		else
-		{
-			shadingMode =0;
-		}
-		break;
-	case 'd':
-	case 'D':
-		if (lightSource == 0)
-		{
-			lightSource =1;
-		}
-		else
-		{
-			lightSource =0;
-		}
-		break;
-	case 'f':
-	case 'F':
-		if (lightSource == 1)
-		{
-			//change color of the secondary light source at each key press, 
-			//light color cycling through pure red, green, blue, and white.
-		}
-		break;
-
     default:
 		break;
     }
+	if(algorithm == 0 || algorithm == 7)
+		object = 0;
+	else if (algorithm == 1 || algorithm == 3 || algorithm == 5)
+		object = 1;
+	else
+		object = 2;
+	if(algorithm >= 3 && algorithm <= 6)
+		texture = 1;
+	else
+		texture = 0;
+	if(algorithm <= 4)
+		mapping = 0;
+	else if (algorithm <= 6)
+		mapping = 1;
+	else
+		mapping = 2;
 
 	glutPostRedisplay();
 }
 
 int main(int argc, char **argv) 
 {			  
+		
+	//meshReader("teapot.obj", 1);
+	meshReader("plane.obj", 1);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
@@ -290,8 +279,6 @@ int main(int argc, char **argv)
 
 	
 	setShaders();
-	
-	meshReader("teapot.obj", 1);
 
 	glutMainLoop();
 
@@ -371,10 +358,12 @@ void setShaders()
 
 	glGetObjectParameterivARB(fragment_shader, GL_OBJECT_COMPILE_STATUS_ARB, &fragCompiled);
 	glGetObjectParameterivARB(vertex_shader, GL_OBJECT_COMPILE_STATUS_ARB, &vertCompiled);
-    if (!vertCompiled || !fragCompiled)
+    if (!vertCompiled)
 	{
-        cout<<"not compiled"<<endl;
+        cout<<"not compiled: vert"<<endl;
 	}
+	if (!fragCompiled)
+		cout<<"not compiled: frag"<<endl;
 	
 	//create an empty program object to attach the shader objects
 	p = glCreateProgramObjectARB();
@@ -453,7 +442,7 @@ void setParameters(GLuint program)
 	float tangent_loc;
 
 	update_Light_Position();
-
+	/*
 	//Access uniform variables in shaders
 	ambient_loc = getUniformVariable(program, "AmbientContribution");	
 	glUniform3fvARB(ambient_loc,1, ambient_cont);
@@ -471,12 +460,10 @@ void setParameters(GLuint program)
 	tangent_loc = glGetAttribLocationARB(program,"tang");
 	glVertexAttrib1fARB(tangent_loc,tangent);
 
-	GLint units;
-	glGetIntegerv (GL_MAX_TEXTURE_UNITS, &units);
-	glActiveTexture (GL_TEXTURE0);
+	//GLint units;
+	//glGetIntegerv (GL_MAX_TEXTURE_UNITS, &units);
+	//glActiveTexture (GL_TEXTURE0);*/
 
-	GLint texloc;
-	texloc = getUniformVariable(fragment_shader, "textureID");
 }
 
 
